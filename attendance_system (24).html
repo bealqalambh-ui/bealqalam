@@ -1,0 +1,1283 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>أكاديمية بالقلم - سيستم الحضور</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--surface2:#f0eeea;--border:#e0ddd8;--border2:#ccc9c2;
+  --text:#1a1917;--text2:#6b6860;--text3:#9e9b94;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;
+  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;
+  --blue:#1d4ed8;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
+  --amber:#92400e;--amber-bg:#fffbeb;--amber-border:#fde68a;
+  --r:10px;--rl:14px;--sh:0 1px 3px rgba(0,0,0,.08)
+}
+body{font-family:'IBM Plex Sans Arabic',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6}
+
+header{background:var(--surface);border-bottom:1px solid var(--border);padding:.85rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;flex-wrap:wrap;gap:10px}
+.logo-text{font-size:18px;font-weight:700}.logo-text span{color:var(--blue)}
+.logo-sub{font-size:11px;color:var(--text3)}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#ccc;display:inline-block;margin-left:6px;transition:background .3s}
+.sync-dot.ok{background:var(--green)}.sync-dot.err{background:var(--red)}.sync-dot.loading{background:var(--amber);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sync-label{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:4px}
+
+.tabs{display:flex;gap:4px;flex-wrap:wrap}
+.tab{padding:7px 15px;border:1px solid transparent;border-radius:var(--r);cursor:pointer;font-size:14px;font-family:inherit;color:var(--text2);background:transparent;transition:all .15s;font-weight:500}
+.tab:hover:not(.active){background:var(--surface2)}
+.tab.active{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
+
+main{max-width:1020px;margin:0 auto;padding:1.75rem 1.5rem}
+.screen{display:none}.screen.active{display:block}
+
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:12px;margin-bottom:1.75rem}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem;box-shadow:var(--sh)}
+.stat-label{font-size:12px;color:var(--text3);margin-bottom:4px;font-weight:500}
+.stat-val{font-size:24px;font-weight:600}.stat-val.green{color:var(--green)}.stat-val.red{color:var(--red)}.stat-val.blue{color:var(--blue)}
+
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;gap:10px;flex-wrap:wrap}
+.tl,.tr{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input[type=date],input[type=text]{padding:8px 12px;border:1px solid var(--border2);border-radius:var(--r);background:var(--surface);color:var(--text);font-size:14px;font-family:inherit;outline:none}
+select:focus,input:focus{border-color:var(--blue)}
+.btn{padding:8px 15px;border:1px solid var(--border2);border-radius:var(--r);cursor:pointer;font-size:13px;font-family:inherit;font-weight:500;background:var(--surface);color:var(--text2);transition:all .15s;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.gbtn{background:var(--green-bg);color:var(--green);border-color:var(--green-border)}
+.rbtn-sm{background:var(--red-bg);color:var(--red);border-color:var(--red-border);font-size:12px;padding:5px 10px}
+.bbtn{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-border)}
+
+.sec-title{font-size:15px;font-weight:600}
+.all-btns{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+
+.student-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+.sc{border:1px solid var(--border);border-radius:var(--rl);padding:12px 14px;background:var(--surface);cursor:pointer;transition:all .12s;user-select:none;box-shadow:var(--sh)}
+.sc:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.1)}.sc:active{transform:scale(.98)}
+.sc.present{border-color:var(--green-border);background:var(--green-bg)}
+.sc.absent{border-color:var(--red-border);background:var(--red-bg)}
+.sc.off-day{opacity:.4;cursor:default}.sc.off-day:hover{transform:none;box-shadow:var(--sh)}
+.cn{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.sc.present .cn{color:var(--green)}.sc.absent .cn{color:var(--red)}
+.cc{font-size:11px;color:var(--text3);margin-bottom:7px}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px}
+.bp{background:#dcfce7;color:#15803d}.ba{background:#fee2e2;color:#b91c1c}
+.bn{background:var(--surface2);color:var(--text3)}.boff{background:#f1f0ed;color:#aaa}
+.tag-pvt{font-size:10px;padding:1px 6px;border-radius:4px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border);font-weight:600;margin-left:4px}
+
+.tw{border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;background:var(--surface);box-shadow:var(--sh)}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+th{padding:10px 14px;text-align:right;background:var(--surface2);border-bottom:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:600}
+td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle}
+tr:last-child td{border-bottom:none}tbody tr:hover{background:var(--surface2)}
+.pbar{height:5px;background:var(--surface2);border-radius:99px;overflow:hidden;margin-top:5px;width:70px}
+.pfill{height:100%;border-radius:99px}
+
+.add-form{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin-bottom:1.5rem;box-shadow:var(--sh)}
+.af-title{font-size:14px;font-weight:600;margin-bottom:12px}
+.form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.fg{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.fg label{font-size:12px;font-weight:500;color:var(--text2)}.fg input,.fg select{width:100%}
+
+.group-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rl);padding:1.25rem;margin-bottom:12px;box-shadow:var(--sh)}
+.group-card-title{font-size:14px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
+.days-row{display:flex;gap:8px;flex-wrap:wrap}
+.day-btn{padding:6px 14px;border:1px solid var(--border2);border-radius:99px;cursor:pointer;font-size:13px;font-family:inherit;background:var(--surface2);color:var(--text2);transition:all .12s;font-weight:500}
+.day-btn.on{background:var(--blue-bg);border-color:var(--blue-border);color:var(--blue);font-weight:600}
+
+.info-box{background:var(--blue-bg);border:1px solid var(--blue-border);border-radius:var(--r);padding:.85rem 1rem;margin-bottom:1.25rem;font-size:13px;color:var(--blue);line-height:1.7}
+.empty{text-align:center;padding:3rem;color:var(--text3);font-size:14px}
+
+/* Loading overlay */
+.loading-overlay{position:fixed;inset:0;background:rgba(245,244,240,.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:12px}
+.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--text2)}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--text);color:#fff;padding:10px 22px;border-radius:99px;font-size:13px;font-weight:500;opacity:0;transition:all .2s;pointer-events:none;z-index:9999;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal{background:var(--surface);border-radius:var(--rl);padding:1.5rem;width:100%;max-width:440px;box-shadow:0 20px 60px rgba(0,0,0,.15)}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:1.25rem}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:1.25rem}
+.hidden{display:none}
+/* Expiry warning banner */
+.expiry-banner{background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--r);padding:.75rem 1rem;margin-bottom:1.25rem;font-size:13px;color:var(--red);line-height:1.7}
+.expiry-banner.warn{background:var(--amber-bg);border-color:var(--amber-border);color:var(--amber)}
+
+/* Payments */
+.method-cash{background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.method-transfer{background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+
+/* Month boxes */
+.month-box{border:1px solid var(--border);border-radius:var(--r);padding:12px;background:var(--surface2)}
+.month-box-title{font-size:12px;font-weight:600;color:var(--blue);margin-bottom:10px}
+.month-required{color:var(--red)}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay">
+  <div class="spinner"></div>
+  <div class="loading-text">جاري تحميل البيانات...</div>
+</div>
+
+<header>
+  <div>
+    <div class="logo-text">أكاديمية <span>بالقلم</span></div>
+    <div class="logo-sub">نظام تسجيل الحضور</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+    <div class="sync-label"><span class="sync-dot" id="sync-dot"></span><span id="sync-label">جاري الاتصال...</span></div>
+    <div class="tabs">
+      <button class="tab active"  onclick="showTab('attendance',this)">تسجيل الحضور</button>
+      <button class="tab"         onclick="showTab('schedule',this)">📅 جدول الأيام</button>
+      <button class="tab"         onclick="showTab('students',this)">الطلاب</button>
+      <button class="tab"         onclick="showTab('reports',this)">التقارير</button>
+      <button class="tab"         onclick="showTab('payments',this)">💰 الدفع</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- الحضور -->
+<div id="screen-attendance" class="screen active">
+  <div class="stats-grid" id="att-stats"></div>
+  <div class="toolbar">
+    <div class="tl"><span class="sec-title">سجّل الحضور</span></div>
+    <div class="tr">
+      <input type="text" id="search-att" placeholder="بحث..." oninput="renderAtt()" style="width:155px">
+      <select id="cls-filter" onchange="renderAtt()"><option value="">كل المجموعات</option></select>
+      <input type="date" id="att-date" onchange="renderAtt()">
+      <label style="display:flex;align-items:center;gap:5px;font-size:13px;cursor:pointer;color:var(--text2)">
+        <input type="checkbox" id="hide-offday" onchange="renderAtt()" style="width:auto"> إخفاء غير المقررين
+      </label>
+    </div>
+  </div>
+  <div class="all-btns">
+    <button class="btn gbtn"    onclick="markAll('present')">تحضير الكل ✓</button>
+    <button class="btn rbtn-sm" onclick="markAll('absent')">غياب الكل ✗</button>
+    <button class="btn"         onclick="markAll(null)">مسح الكل</button>
+  </div>
+  <div class="student-grid" id="att-grid"></div>
+</div>
+
+<!-- جدول الأيام -->
+<div id="screen-schedule" class="screen">
+  <div class="info-box">💡 حدد أيام الحضور لكل مجموعة أو طالب خصوصي. التغييرات تُحفظ فوراً في السحابة.</div>
+  <div class="toolbar">
+    <span class="sec-title">إعدادات أيام الحضور</span>
+    <select id="schedule-view" onchange="renderSchedule()">
+      <option value="groups">المجموعات</option>
+      <option value="private">الخصوصي</option>
+    </select>
+  </div>
+  <div id="schedule-list"></div>
+</div>
+
+<!-- الطلاب -->
+<div id="screen-students" class="screen">
+  <div class="add-form">
+    <div class="af-title">إضافة طالب جديد</div>
+    <div class="form-row">
+      <div class="fg"><label>الاسم</label><input type="text" id="new-name" placeholder="اسم الطالب"></div>
+      <div class="fg"><label>المجموعة</label><select id="new-class"><option value="">اختر...</option></select></div>
+      <div class="fg"><label>أو مجموعة جديدة</label><input type="text" id="new-class-custom" placeholder="اسم جديد"></div>
+      <div class="fg"><label>رقم</label><input type="text" id="new-sid" placeholder="اختياري"></div>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <div class="fg"><label>تاريخ بداية الاشتراك</label><input type="date" id="new-start" style="width:100%"></div>
+      <div class="fg"><label>تاريخ نهاية الاشتراك</label><input type="date" id="new-end" style="width:100%"></div>
+      <div class="fg"><label>عدد الحصص الكلية</label><input type="number" id="new-sessions" placeholder="مثال: 16" min="0" style="width:100%"></div>
+      <button class="btn bbtn" style="margin-top:22px" onclick="addStudent()">+ إضافة</button>
+    </div>
+  </div>
+  <div class="toolbar">
+    <span class="sec-title" id="students-count">الطلاب</span>
+    <div class="tr">
+      <select id="stu-cls-filter" onchange="renderStudents()"><option value="">كل المجموعات</option></select>
+      <input type="text" id="search-stu" placeholder="بحث..." oninput="renderStudents()" style="width:155px">
+    </div>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr>
+        <th style="width:5%">رقم</th>
+        <th style="width:20%">الاسم</th>
+        <th style="width:16%">المجموعة</th>
+        <th style="width:12%">نسبة الحضور</th>
+        <th style="width:10%">أيام الحضور</th>
+        <th style="width:10%">بداية الاشتراك</th>
+        <th style="width:10%">نهاية الاشتراك</th>
+        <th style="width:10%">الحالة</th>
+        <th style="width:7%"></th>
+      </tr></thead>
+      <tbody id="students-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- التقارير -->
+<div id="screen-reports" class="screen">
+  <div class="stats-grid" id="rpt-stats"></div>
+  <div class="toolbar">
+    <span class="sec-title">تقرير تفصيلي</span>
+    <div class="tr">
+      <select id="rpt-cls" onchange="renderReports()"><option value="">كل المجموعات</option></select>
+      <button class="btn bbtn" onclick="exportCSV()">⬇ تصدير CSV</button>
+    </div>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr>
+        <th style="width:28%">الاسم</th><th style="width:22%">المجموعة</th>
+        <th style="width:12%">حاضر</th><th style="width:12%">غائب</th><th style="width:26%">النسبة</th>
+      </tr></thead>
+      <tbody id="reports-table"></tbody>
+    </table>
+  </div>
+</div>
+
+
+<!-- Modal تعديل الاشتراك -->
+<div class="modal-overlay hidden" id="sub-modal-overlay" onclick="if(event.target===this)closeSubModal()">
+  <div class="modal">
+    <div class="modal-title">تعديل بيانات الاشتراك</div>
+    <input type="hidden" id="modal-student-id">
+    <div class="form-row">
+      <div class="fg"><label>تاريخ بداية الاشتراك</label><input type="date" id="modal-start"></div>
+      <div class="fg"><label>تاريخ نهاية الاشتراك</label><input type="date" id="modal-end"></div>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <div class="fg"><label>عدد الحصص الكلية</label><input type="number" id="modal-sessions" min="0" placeholder="مثال: 16" style="width:100%"></div>
+      <div class="fg"><label>الرسوم الشهرية (د.ب)</label><input type="number" id="modal-fee" step="0.001" min="0" placeholder="0.000" style="width:100%;font-weight:600"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeSubModal()">إلغاء</button>
+      <button class="btn bbtn" onclick="saveSubModal()">حفظ ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- الدفع -->
+<div id="screen-payments" class="screen">
+
+  <!-- ملخص مالي -->
+  <div class="stats-grid" id="pay-stats"></div>
+
+  <!-- تسجيل دفعة -->
+  <div class="add-form">
+    <div class="af-title">تسجيل دفعة جديدة</div>
+    <div class="form-row">
+      <div class="fg">
+        <label>الطالب</label>
+        <select id="pay-student" onchange="onPayStudentChange()"><option value="">اختر طالب...</option></select>
+      </div>
+      <div class="fg">
+        <label>طريقة الدفع</label>
+        <select id="pay-method" style="width:100%">
+          <option value="cash">كاش 💵</option>
+          <option value="transfer">تحويل 🏦</option>
+          <option value="other">أخرى</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>تاريخ الدفع (للتوثيق)</label>
+        <input type="date" id="pay-date" style="width:100%">
+      </div>
+      <div class="fg">
+        <label>ملاحظة (اختياري)</label>
+        <input type="text" id="pay-note" placeholder="مثال: خصم" style="width:100%">
+      </div>
+    </div>
+
+    <!-- الأشهر المحاسبية -->
+    <div style="margin-top:14px">
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px">الأشهر المحاسبية — أدخل المبلغ لكل شهر تريد تسجيله:</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px" id="months-grid">
+        <div class="month-box" id="mbox-1">
+          <div class="month-box-title">الشهر الأول <span class="month-required">*</span></div>
+          <div class="fg" style="margin-bottom:8px">
+            <label>الشهر المحاسبي</label>
+            <input type="month" id="m1-month" onchange="onMonthChange(1)" style="width:100%">
+          </div>
+          <div class="fg" style="margin-bottom:8px">
+            <label>المبلغ (د.ب)</label>
+            <input type="number" id="m1-amount" placeholder="0.000" step="0.001" min="0" oninput="calcTotal()" style="width:100%;font-weight:600">
+          </div>
+          <div class="fg">
+            <label>دفع جزئي؟</label>
+            <select id="m1-partial" style="width:100%">
+              <option value="false">لا — مكتمل</option>
+              <option value="true">نعم — جزئي</option>
+            </select>
+          </div>
+        </div>
+        <div class="month-box" id="mbox-2">
+          <div class="month-box-title" style="color:var(--text3)">الشهر الثاني <span style="font-size:10px;font-weight:400">اختياري</span></div>
+          <div class="fg" style="margin-bottom:8px">
+            <label>الشهر المحاسبي</label>
+            <input type="month" id="m2-month" onchange="onMonthChange(2)" style="width:100%">
+          </div>
+          <div class="fg" style="margin-bottom:8px">
+            <label>المبلغ (د.ب)</label>
+            <input type="number" id="m2-amount" placeholder="0.000" step="0.001" min="0" oninput="calcTotal()" style="width:100%;font-weight:600">
+          </div>
+          <div class="fg">
+            <label>دفع جزئي؟</label>
+            <select id="m2-partial" style="width:100%">
+              <option value="false">لا — مكتمل</option>
+              <option value="true">نعم — جزئي</option>
+            </select>
+          </div>
+        </div>
+        <div class="month-box" id="mbox-3">
+          <div class="month-box-title" style="color:var(--text3)">الشهر الثالث <span style="font-size:10px;font-weight:400">اختياري</span></div>
+          <div class="fg" style="margin-bottom:8px">
+            <label>الشهر المحاسبي</label>
+            <input type="month" id="m3-month" onchange="onMonthChange(3)" style="width:100%">
+          </div>
+          <div class="fg" style="margin-bottom:8px">
+            <label>المبلغ (د.ب)</label>
+            <input type="number" id="m3-amount" placeholder="0.000" step="0.001" min="0" oninput="calcTotal()" style="width:100%;font-weight:600">
+          </div>
+          <div class="fg">
+            <label>دفع جزئي؟</label>
+            <select id="m3-partial" style="width:100%">
+              <option value="false">لا — مكتمل</option>
+              <option value="true">نعم — جزئي</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;flex-wrap:wrap;gap:8px">
+        <div id="pay-preview" style="font-size:13px;color:var(--blue);font-weight:500"></div>
+        <button class="btn bbtn" onclick="addPayment()">+ تسجيل الدفعة</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- كشف شهري -->
+  <div class="toolbar" style="margin-top:1.5rem">
+    <span class="sec-title" id="pay-table-title">كشف الدفعات</span>
+    <div class="tr">
+      <select id="pay-filter-cls" onchange="renderPayments()"><option value="">كل المجموعات</option></select>
+      <select id="pay-filter-status" onchange="renderPayments()">
+        <option value="">الكل</option>
+        <option value="paid">مدفوع 🟢</option>
+        <option value="partial">جزئي 🟡</option>
+        <option value="unpaid">لم يدفع 🔴</option>
+      </select>
+      <input type="month" id="pay-filter-month" onchange="renderPayments()" style="width:150px">
+      <input type="text" id="pay-search" placeholder="بحث عن طالب..." oninput="renderPayments()" style="width:150px">
+    </div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr>
+        <th style="width:18%">الطالب</th>
+        <th style="width:12%">المجموعة</th>
+        <th style="width:9%">المطلوب/شهر</th>
+        <th style="width:9%">المدفوع</th>
+        <th style="width:9%">المتبقي</th>
+        <th style="width:8%">الحالة</th>
+        <th style="width:8%">الطريقة</th>
+        <th style="width:10%">تاريخ الدفع</th>
+        <th style="width:9%">الشهر المحاسبي</th>
+        <th style="width:4%"></th>
+      </tr></thead>
+      <tbody id="payments-table"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- مودال تعديل الدفعة -->
+<div class="modal-overlay hidden" id="edit-pay-modal" onclick="if(event.target===this)closeEditPay()">
+  <div class="modal">
+    <div class="modal-title" id="edit-pay-title">تعديل الدفعة</div>
+    <input type="hidden" id="edit-pay-id">
+    <div class="form-row">
+      <div class="fg"><label>الشهر المحاسبي</label><input type="month" id="edit-pay-month" style="width:100%"></div>
+      <div class="fg"><label>المبلغ المدفوع (د.ب)</label><input type="number" id="edit-pay-amount" step="0.001" min="0" style="width:100%;font-weight:600"></div>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <div class="fg"><label>طريقة الدفع</label>
+        <select id="edit-pay-method" style="width:100%">
+          <option value="cash">كاش 💵</option>
+          <option value="transfer">تحويل 🏦</option>
+          <option value="other">أخرى</option>
+        </select>
+      </div>
+      <div class="fg"><label>تاريخ الدفع</label><input type="date" id="edit-pay-date" style="width:100%"></div>
+      <div class="fg"><label>دفع جزئي؟</label>
+        <select id="edit-pay-partial" style="width:100%">
+          <option value="false">لا — مكتمل</option>
+          <option value="true">نعم — جزئي</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row" style="margin-top:10px">
+      <div class="fg"><label>ملاحظة</label><input type="text" id="edit-pay-note" placeholder="اختياري" style="width:100%"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeEditPay()">إلغاء</button>
+      <button class="btn bbtn" onclick="saveEditPay()">حفظ ✓</button>
+    </div>
+  </div>
+</div>
+
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// SUPABASE CONFIG
+// ============================================================
+const SB_URL = 'https://kbdmttehsksqufeteqzb.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtiZG10dGVoc2tzcXVmZXRlcXpiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcwNDk5MjIsImV4cCI6MjA5MjYyNTkyMn0.SHjDGJdnaFg6Hx2pybhRj3TDoQrIbJjCzGqM8XYF_ns';
+const HEADERS = { 'apikey': SB_KEY, 'Authorization': 'Bearer '+SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' };
+
+async function sb(method, table, body, params='') {
+  const res = await fetch(`${SB_URL}/rest/v1/${table}${params}`, { method, headers: { ...HEADERS, ...(method!=='GET'?{'Prefer':'return=representation'}:{}) }, body: body ? JSON.stringify(body) : undefined });
+  if (!res.ok) { const e = await res.text(); throw new Error(e); }
+  if (res.status === 204 || res.headers.get('content-length')==='0') return null;
+  return res.json();
+}
+const sbGet    = (t, p='')    => sb('GET', t, null, p);
+const sbPost   = (t, b)       => sb('POST', t, b);
+const sbPatch  = (t, b, p='') => sb('PATCH', t, b, p);
+const sbDelete = (t, p='')    => sb('DELETE', t, null, p);
+const sbUpsert = (t, b)       => fetch(`${SB_URL}/rest/v1/${t}`, { method:'POST', headers:{...HEADERS,'Prefer':'resolution=merge-duplicates,return=minimal'}, body:JSON.stringify(b) }).then(r=>{ if(!r.ok) return r.text().then(e=>{throw new Error(e)}); return null; });
+
+// ============================================================
+// INITIAL DATA
+// ============================================================
+const DAYS = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+
+const INIT_STUDENTS = [
+  {id:1,sid:"1",name:"عمار ياسر",cls:"المجموعة 1"},
+  {id:2,sid:"2",name:"فراس حسين المطوع",cls:"المجموعة 1"},
+  {id:3,sid:"3",name:"علي حسن محمد عيسى",cls:"المجموعة 1"},
+  {id:4,sid:"4",name:"حسين رائد",cls:"المجموعة 1"},
+  {id:5,sid:"5",name:"يوسف يعقوب",cls:"المجموعة 1"},
+  {id:6,sid:"6",name:"هاشم محمد العلوي",cls:"المجموعة 1"},
+  {id:7,sid:"7",name:"عبد العزيز محمد العلوي",cls:"المجموعة 1"},
+  {id:8,sid:"8",name:"إيلاف",cls:"المجموعة 1"},
+  {id:9,sid:"9",name:"هديل قريب الله",cls:"المجموعة 1"},
+  {id:10,sid:"1",name:"يوسف هاشم",cls:"المجموعة 2"},
+  {id:11,sid:"2",name:"زينب",cls:"المجموعة 2"},
+  {id:12,sid:"3",name:"رضا على عبد الحسين",cls:"المجموعة 2"},
+  {id:13,sid:"4",name:"علي حسين محمد",cls:"المجموعة 2"},
+  {id:14,sid:"5",name:"يوسف صالح",cls:"المجموعة 2"},
+  {id:15,sid:"6",name:"سيد علي رضا",cls:"المجموعة 2"},
+  {id:16,sid:"7",name:"ريم قريب الله",cls:"المجموعة 2"},
+  {id:17,sid:"1",name:"علي الحمد",cls:"المجموعة 3"},
+  {id:18,sid:"2",name:"علي محمد جعفر",cls:"المجموعة 3"},
+  {id:19,sid:"3",name:"صادق جعفر",cls:"المجموعة 3"},
+  {id:20,sid:"4",name:"حسن سمير",cls:"المجموعة 3"},
+  {id:21,sid:"5",name:"حسين سمير",cls:"المجموعة 3"},
+  {id:22,sid:"6",name:"علي سمير",cls:"المجموعة 3"},
+  {id:23,sid:"7",name:"سيد فاضل عباس",cls:"المجموعة 3"},
+  {id:24,sid:"1",name:"حسين محمد أحمد",cls:"المجموعة 4"},
+  {id:25,sid:"2",name:"سلمان",cls:"المجموعة 4"},
+  {id:26,sid:"3",name:"زين محمد أحمد",cls:"المجموعة 4"},
+  {id:27,sid:"4",name:"عباس ميرزا",cls:"المجموعة 4"},
+  {id:28,sid:"2",name:"علي أحمد",cls:"المجموعة 5"},
+  {id:29,sid:"3",name:"سيد مهدي نجيب",cls:"المجموعة 5"},
+  {id:30,sid:"4",name:"هادي سلمان",cls:"المجموعة 5"},
+  {id:31,sid:"1",name:"أحمد",cls:"المجموعة 6"},
+  {id:32,sid:"2",name:"يوسف",cls:"المجموعة 6"},
+  {id:33,sid:"3",name:"يوسف محمد عبد الله",cls:"المجموعة 6"},
+  {id:34,sid:"4",name:"علي محمد منصور",cls:"المجموعة 6"},
+  {id:35,sid:"5",name:"فاطمة جعفر علي",cls:"المجموعة 6"},
+  {id:36,sid:"6",name:"سلمان محمد الدوسري",cls:"المجموعة 6"},
+  {id:37,sid:"7",name:"علي رضا",cls:"المجموعة 6"},
+  {id:38,sid:"8",name:"آدم محمود الصيرفي",cls:"المجموعة 6"},
+  {id:39,sid:"9",name:"سيد يوسف",cls:"المجموعة 6"},
+  {id:40,sid:"10",name:"ليال",cls:"المجموعة 6"},
+  {id:41,sid:"11",name:"سيد أحمد",cls:"المجموعة 6"},
+  {id:42,sid:"1",name:"ادم",cls:"المجموعة 7"},
+  {id:43,sid:"2",name:"جاسم",cls:"المجموعة 7"},
+  {id:44,sid:"3",name:"علي",cls:"المجموعة 7"},
+  {id:45,sid:"1",name:"أميرة حسن العرادي",cls:"السبت والخميس ٥:١٥-٦:١٥"},
+  {id:46,sid:"2",name:"إلياس خليل",cls:"السبت والخميس ٥:١٥-٦:١٥"},
+  {id:47,sid:"3",name:"عبدالله الدرازي",cls:"السبت والخميس ٥:١٥-٦:١٥"},
+  {id:48,sid:"4",name:"حسين علي سلمان",cls:"السبت والخميس ٥:١٥-٦:١٥"},
+  {id:49,sid:"5",name:"سيد قاسم",cls:"السبت والخميس ٥:١٥-٦:١٥"},
+  {id:50,sid:"6",name:"حور حسين",cls:"السبت والخميس ٥:١٥-٦:١٥"},
+  {id:51,sid:"7",name:"امل علي ناصر",cls:"السبت والخميس ٥:١٥-٦:١٥"},
+  {id:52,sid:"1",name:"حوراء حسن",cls:"الثلاثاء والخميس 4:15-5:15"},
+  {id:53,sid:"2",name:"مريم حسين",cls:"الثلاثاء والخميس 4:15-5:15"},
+  {id:54,sid:"3",name:"محمود أحمد الخنة",cls:"الثلاثاء والخميس 4:15-5:15"},
+  {id:55,sid:"4",name:"نوح حسن",cls:"الثلاثاء والخميس 4:15-5:15"},
+  {id:56,sid:"5",name:"فاطمة ياسر",cls:"الثلاثاء والخميس 4:15-5:15"},
+  {id:57,sid:"1",name:"هادي جميل",cls:"خصوصي"},
+  {id:58,sid:"2",name:"حياة",cls:"خصوصي"},
+  {id:59,sid:"3",name:"محمد فخراوي",cls:"خصوصي"},
+  {id:60,sid:"4",name:"سامر - داليا",cls:"خصوصي"},
+  {id:61,sid:"5",name:"شيخة",cls:"خصوصي"},
+  {id:62,sid:"6",name:"سيد عباس مجيد",cls:"خصوصي"},
+  {id:63,sid:"7",name:"حسين علي",cls:"خصوصي"},
+  {id:64,sid:"8",name:"يوسف محمد",cls:"خصوصي"},
+  {id:65,sid:"9",name:"حسين جعفر",cls:"خصوصي"},
+  {id:66,sid:"10",name:"عباس",cls:"خصوصي"},
+  {id:67,sid:"11",name:"جود",cls:"خصوصي"},
+  {id:68,sid:"12",name:"خولة يوسف القصاب",cls:"خصوصي"},
+  {id:69,sid:"13",name:"آمنة القطري",cls:"خصوصي"},
+  {id:70,sid:"14",name:"السيد ناصر يوسف",cls:"خصوصي"},
+  {id:71,sid:"15",name:"علي جار الله",cls:"خصوصي"},
+  {id:72,sid:"16",name:"سيد ناصر",cls:"خصوصي"},
+  {id:73,sid:"17",name:"دلال علي الحسن",cls:"خصوصي"},
+  {id:74,sid:"18",name:"ليا حسين",cls:"خصوصي"},
+  {id:75,sid:"19",name:"فاطمة عباس",cls:"خصوصي"},
+  {id:76,sid:"20",name:"محسن",cls:"خصوصي"},
+  {id:77,sid:"21",name:"إلياس",cls:"خصوصي"},
+  {id:78,sid:"22",name:"علي حسين محمد",cls:"خصوصي"},
+  {id:79,sid:"23",name:"فارس عبد الهادي",cls:"خصوصي"},
+  {id:80,sid:"24",name:"مريم",cls:"خصوصي"}
+];
+
+// ============================================================
+// STATE
+// ============================================================
+let students = [];
+let att = {};      // { "studentId_date": "present"|"absent" }
+let schedule = {}; // { "cls"|"student_id": [0,1,4,...] }
+let nid = 81;
+
+const INIT_SCHEDULE = {
+  "السبت والخميس ٥:١٥-٦:١٥": [4,6],
+  "الثلاثاء والخميس 4:15-5:15": [2,4]
+};
+
+// ============================================================
+// SYNC STATUS
+// ============================================================
+function setSyncStatus(status, msg) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot ' + status;
+  lbl.textContent = msg;
+}
+
+// ============================================================
+// LOAD FROM SUPABASE
+// ============================================================
+async function loadAll() {
+  try {
+    setSyncStatus('loading', 'جاري التحميل...');
+
+    // Load students
+    const dbStudents = await sbGet('students', '?order=id');
+    if (dbStudents && dbStudents.length > 0) {
+      students = dbStudents;
+      nid = Math.max(...students.map(s => s.id)) + 1;
+    } else {
+      // First time: upload initial students
+      students = INIT_STUDENTS.map(s=>({...s}));
+      await sbUpsert('students', students);
+      nid = 81;
+    }
+
+    // Load attendance
+    const dbAtt = await sbGet('attendance', '?select=student_id,date,status');
+    att = {};
+    if (dbAtt) dbAtt.forEach(r => { att[r.student_id+'_'+r.date] = r.status; });
+
+    // Load schedule
+    const dbSch = await sbGet('schedule', '');
+    schedule = {};
+    if (dbSch && dbSch.length > 0) {
+      dbSch.forEach(r => { schedule[r.key] = r.days; });
+    } else {
+      // First time: upload initial schedule
+      schedule = {...INIT_SCHEDULE};
+      const rows = Object.entries(schedule).map(([key,days])=>({key,days}));
+      if(rows.length) await sbUpsert('schedule', rows);
+    }
+
+    await loadPayments();
+    setSyncStatus('ok', 'متزامن ✓');
+    document.getElementById('loading-overlay').style.display = 'none';
+    renderAtt();
+  } catch(e) {
+    setSyncStatus('err', 'خطأ في الاتصال');
+    document.getElementById('loading-overlay').style.display = 'none';
+    console.error(e);
+    showToast('تعذّر الاتصال بالسحابة');
+    // fallback to empty
+    students = INIT_STUDENTS.map(s=>({...s}));
+    renderAtt();
+  }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+const today = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+};
+const getDate   = () => document.getElementById('att-date').value || today();
+const dayOfDate = d => { const [y,m,day]=d.split('-').map(Number); return new Date(y,m-1,day).getDay(); };
+const getSt     = (id,d) => att[id+'_'+d] || null;
+
+function setSt(id, d, status) {
+  // تحديث فوري في الذاكرة
+  const key = id+'_'+d;
+  if(status === null) delete att[key]; else att[key] = status;
+  // حفظ في السحابة في الخلفية
+  setSyncStatus('loading','جاري الحفظ...');
+  const promise = status === null
+    ? sbDelete('attendance', `?student_id=eq.${id}&date=eq.${d}`)
+    : sbUpsert('attendance', [{student_id:id, date:d, status}]);
+  promise
+    .then(()=> setSyncStatus('ok','متزامن ✓'))
+    .catch(()=>{ setSyncStatus('err','خطأ في الحفظ'); showToast('تعذّر الحفظ، حاول مجدداً'); });
+}
+
+const getRate = id => {
+  const ks=Object.keys(att).filter(k=>k.startsWith(id+'_'));
+  return ks.length ? Math.round(ks.filter(k=>att[k]==='present').length/ks.length*100) : null;
+};
+const getDates = () => { const s=new Set(); Object.keys(att).forEach(k=>s.add(k.split('_').slice(1).join('_'))); return [...s].sort(); };
+const getClasses = () => [...new Set(students.map(s=>s.cls))].sort((a,b)=>{
+  const rank=c=>c.startsWith('المجموعة')?0:c==='خصوصي'?2:1;
+  return rank(a)-rank(b)||a.localeCompare(b,'ar');
+});
+
+function getStudentDays(s) {
+  const k='student_'+s.id;
+  if(schedule[k]!==undefined) return schedule[k];
+  if(schedule[s.cls]!==undefined) return schedule[s.cls];
+  return null;
+}
+function isScheduledDay(s,d) {
+  const days=getStudentDays(s);
+  if(!days||days.length===0) return true;
+  return days.includes(dayOfDate(d));
+}
+
+function updSelects() {
+  const cls=getClasses();
+  const nc=document.getElementById('new-class');
+  if(nc){const c=nc.value;nc.innerHTML='<option value="">اختر...</option>'+cls.map(x=>`<option value="${x}"${x===c?' selected':''}>${x}</option>`).join('');}
+  ['cls-filter','stu-cls-filter','rpt-cls'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const c=el.value;
+    el.innerHTML='<option value="">كل المجموعات</option>'+cls.map(x=>`<option value="${x}"${x===c?' selected':''}>${x}</option>`).join('');
+  });
+}
+
+function showTab(name,btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('screen-'+name).classList.add('active');
+  if(name==='attendance') renderAtt();
+  if(name==='schedule')   renderSchedule();
+  if(name==='students')   renderStudents();
+  if(name==='reports')    renderReports();
+  if(name==='payments'){  renderPayStats(); renderPayments(); renderUnpaid(); }
+}
+
+// ============================================================
+// ATTENDANCE
+// ============================================================
+function renderAtt() {
+  updSelects();
+  renderExpiryBanner();
+  const d=getDate(), cls=document.getElementById('cls-filter').value;
+  const q=document.getElementById('search-att').value.trim();
+  const hideOff=document.getElementById('hide-offday').checked;
+  let all=students.filter(s=>(!cls||s.cls===cls)&&(!q||s.name.includes(q)));
+  if(hideOff) all=all.filter(s=>isScheduledDay(s,d));
+  let p=0,ab=0,un=0;
+  all.forEach(s=>{if(!isScheduledDay(s,d))return;const st=getSt(s.id,d);if(st==='present')p++;else if(st==='absent')ab++;else un++;});
+  const tot=p+ab;
+  document.getElementById('att-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">اليوم</div><div class="stat-val" style="font-size:18px">${DAYS[dayOfDate(d)]}</div></div>
+    <div class="stat"><div class="stat-label">المقررون اليوم</div><div class="stat-val blue">${all.filter(s=>isScheduledDay(s,d)).length}</div></div>
+    <div class="stat"><div class="stat-label">حاضر</div><div class="stat-val green">${p}</div></div>
+    <div class="stat"><div class="stat-label">غائب</div><div class="stat-val red">${ab}</div></div>
+    <div class="stat"><div class="stat-label">نسبة الحضور</div><div class="stat-val">${tot?Math.round(p/tot*100)+'%':'—'}</div></div>`;
+  document.getElementById('att-grid').innerHTML=all.length
+    ? all.map(s=>{
+        const scheduled=isScheduledDay(s,d), st=scheduled?getSt(s.id,d):null;
+        let badge,cls2='';
+        if(!scheduled){badge=`<span class="badge boff">ليس يومه</span>`;cls2='off-day';}
+        else if(st==='present')badge=`<span class="badge bp">حاضر ✓</span>`;
+        else if(st==='absent')badge=`<span class="badge ba">غائب ✗</span>`;
+        else badge=`<span class="badge bn">لم يُسجَّل</span>`;
+        const pvt=s.cls==='خصوصي'?`<span class="tag-pvt">خصوصي</span>`:'';
+        const sdays=getStudentDays(s);
+        const daysLabel=sdays&&sdays.length?`<div style="font-size:10px;color:var(--text3);margin-top:4px">${sdays.map(i=>DAYS[i].slice(0,3)).join('، ')}</div>`:'';
+        return `<div class="sc ${st&&scheduled?st:''} ${cls2}" ${scheduled?`onclick="toggle(${s.id})"`:''}>
+          <div class="cn">${s.name}</div><div class="cc">${pvt}${s.cls!=='خصوصي'?s.cls:''}</div>${badge}${daysLabel}</div>`;
+      }).join('')
+    : '<div class="empty">لا يوجد طلاب</div>';
+}
+
+function toggle(id) {
+  const d=getDate(), s=students.find(x=>x.id===id);
+  if(!isScheduledDay(s,d)) return;
+  const cur=getSt(id,d), next=cur===null?'present':cur==='present'?'absent':null;
+  setSt(id,d,next);
+  renderAtt();
+  showToast(next==='present'?'✓ حاضر':next==='absent'?'✗ غائب':'تم المسح');
+}
+
+function markAll(status) {
+  const d=getDate(), cls=document.getElementById('cls-filter').value;
+  const targets=students.filter(s=>(!cls||s.cls===cls)&&isScheduledDay(s,d));
+  // تحديث فوري في الذاكرة
+  targets.forEach(s=>{ const k=s.id+'_'+d; if(status===null) delete att[k]; else att[k]=status; });
+  renderAtt();
+  // حفظ في السحابة في الخلفية
+  setSyncStatus('loading','جاري الحفظ...');
+  Promise.all(targets.map(s=>
+    status===null
+      ? sbDelete('attendance',`?student_id=eq.${s.id}&date=eq.${d}`)
+      : sbUpsert('attendance',[{student_id:s.id,date:d,status}])
+  )).then(()=>setSyncStatus('ok','متزامن ✓'))
+   .catch(()=>setSyncStatus('err','خطأ في الحفظ'));
+}
+
+// ============================================================
+// SCHEDULE
+// ============================================================
+function renderSchedule() {
+  const view=document.getElementById('schedule-view').value;
+  const container=document.getElementById('schedule-list');
+  if(view==='groups') {
+    const classes=getClasses().filter(c=>c!=='خصوصي');
+    container.innerHTML=classes.map(cls=>{
+      const days=schedule[cls]||[];
+      const btns=DAYS.map((d,i)=>`<button class="day-btn ${days.includes(i)?'on':''}" onclick="toggleGroupDay('${cls}',${i},this)">${d}</button>`).join('');
+      return `<div class="group-card"><div class="group-card-title"><span>${cls}</span><span style="font-size:12px;color:var(--text3);font-weight:400">${days.length?days.map(i=>DAYS[i]).join('، '):'كل الأيام'}</span></div><div class="days-row">${btns}</div></div>`;
+    }).join('')||'<div class="empty">لا توجد مجموعات</div>';
+  } else {
+    const pvt=students.filter(s=>s.cls==='خصوصي');
+    container.innerHTML=pvt.map(s=>{
+      const key='student_'+s.id;
+      const days=schedule[key]!==undefined?schedule[key]:(schedule['خصوصي']||[]);
+      const btns=DAYS.map((d,i)=>`<button class="day-btn ${days.includes(i)?'on':''}" onclick="toggleStudentDay(${s.id},${i},this)">${d}</button>`).join('');
+      return `<div class="group-card"><div class="group-card-title"><span>${s.name}</span><span style="font-size:12px;color:var(--text3);font-weight:400">${days.length?days.map(i=>DAYS[i]).join('، '):'لم يُحدد'}</span></div><div class="days-row">${btns}</div></div>`;
+    }).join('')||'<div class="empty">لا يوجد طلاب خصوصي</div>';
+  }
+}
+
+async function toggleGroupDay(cls,dayIdx,btn) {
+  if(!schedule[cls]) schedule[cls]=[];
+  const idx=schedule[cls].indexOf(dayIdx);
+  if(idx>=0) schedule[cls].splice(idx,1); else schedule[cls].push(dayIdx);
+  schedule[cls].sort();
+  btn.classList.toggle('on');
+  btn.closest('.group-card').querySelector('.group-card-title span:last-child').textContent=
+    schedule[cls].length?schedule[cls].map(i=>DAYS[i]).join('، '):'كل الأيام';
+  try { await sbUpsert('schedule',[{key:cls,days:schedule[cls]}]); setSyncStatus('ok','متزامن ✓'); showToast('تم الحفظ ✓'); }
+  catch(e){ setSyncStatus('err','خطأ في الحفظ'); }
+}
+
+async function toggleStudentDay(studentId,dayIdx,btn) {
+  const key='student_'+studentId;
+  if(!schedule[key]) schedule[key]=[...(schedule['خصوصي']||[])];
+  const idx=schedule[key].indexOf(dayIdx);
+  if(idx>=0) schedule[key].splice(idx,1); else schedule[key].push(dayIdx);
+  schedule[key].sort();
+  btn.classList.toggle('on');
+  btn.closest('.group-card').querySelector('.group-card-title span:last-child').textContent=
+    schedule[key].length?schedule[key].map(i=>DAYS[i]).join('، '):'لم يُحدد';
+  try { await sbUpsert('schedule',[{key,days:schedule[key]}]); setSyncStatus('ok','متزامن ✓'); showToast('تم الحفظ ✓'); }
+  catch(e){ setSyncStatus('err','خطأ في الحفظ'); }
+}
+
+// ============================================================
+// STUDENTS
+// ============================================================
+function subStatus(s) {
+  if(!s.end_date) return {label:'—',color:'var(--text3)'};
+  const now=new Date(); now.setHours(0,0,0,0);
+  const end=new Date(s.end_date);
+  const diff=Math.round((end-now)/(1000*60*60*24));
+  if(diff<0)  return {label:'منتهي ❌',color:'var(--red)'};
+  if(diff<=7) return {label:`${diff} أيام ⚠️`,color:'var(--amber)'};
+  return {label:'فعّال ✓',color:'var(--green)'};
+}
+
+function renderStudents() {
+  updSelects();
+  const q=document.getElementById('search-stu').value.trim(), cls=document.getElementById('stu-cls-filter').value;
+  const f=students.filter(s=>(!cls||s.cls===cls)&&(!q||s.name.includes(q)||s.cls.includes(q)));
+  document.getElementById('students-count').textContent=`الطلاب (${students.length})`;
+  document.getElementById('students-table').innerHTML=f.length
+    ? f.map(s=>{
+        const r=getRate(s.id),c=r===null?'':r>=75?'color:var(--green)':'color:var(--red)',bc=r===null?'':r>=75?'var(--green)':'var(--red)';
+        const sdays=getStudentDays(s);
+        const daysStr=sdays&&sdays.length?sdays.map(i=>DAYS[i].slice(0,3)).join('، '):'كل الأيام';
+        const status=subStatus(s);
+        const startStr=s.start_date?s.start_date.replaceAll('-','/'):'—';
+        const endStr=s.end_date?s.end_date.replaceAll('-','/'):'—';
+        return `<tr>
+          <td style="color:var(--text3)">${s.sid||'—'}</td>
+          <td><strong>${s.name}</strong>${s.cls==='خصوصي'?` <span class="tag-pvt">خصوصي</span>`:''}</td>
+          <td style="color:var(--text2);font-size:12px">${s.cls}</td>
+          <td>${r!==null?`<span style="${c};font-weight:600">${r}%</span><div class="pbar"><div class="pfill" style="width:${r}%;background:${bc}"></div></div>`:'<span style="color:var(--text3)">—</span>'}</td>
+          <td style="font-size:12px;color:var(--text2)">${daysStr}</td>
+          <td style="font-size:12px;color:var(--text2)">${startStr}</td>
+          <td style="font-size:12px;color:var(--text2)">${endStr}</td>
+          <td style="font-size:11px;font-weight:600;color:${status.color}">${status.label}</td>
+          <td style="display:flex;gap:4px">
+            <button class="btn rbtn-sm" style="padding:4px 8px" onclick="openSubModal(${s.id})">✏️</button>
+            <button class="btn rbtn-sm" onclick="delStudent(${s.id})">حذف</button>
+          </td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="9" class="empty">لا يوجد طلاب</td></tr>`;
+}
+
+async function addStudent() {
+  const name=document.getElementById('new-name').value.trim();
+  const clsSel=document.getElementById('new-class').value;
+  const clsCustom=document.getElementById('new-class-custom').value.trim();
+  const cls=clsCustom||clsSel, sid=document.getElementById('new-sid').value.trim();
+  const startDate=document.getElementById('new-start').value||null;
+  const endDate=document.getElementById('new-end').value||null;
+  const totalSessions=parseInt(document.getElementById('new-sessions').value)||0;
+  if(!name||!cls){showToast('أدخل الاسم والمجموعة');return;}
+  const newS={id:nid++,sid:sid||'',name,cls,start_date:startDate,end_date:endDate,total_sessions:totalSessions};
+  try {
+    setSyncStatus('loading','جاري الحفظ...');
+    await sbUpsert('students',[newS]);
+    students.push(newS);
+    setSyncStatus('ok','متزامن ✓');
+    ['new-name','new-class-custom','new-sid','new-start','new-end','new-sessions'].forEach(id=>document.getElementById(id).value='');
+    renderStudents(); showToast('تمت الإضافة ✓');
+  } catch(e){ setSyncStatus('err','خطأ في الحفظ'); showToast('تعذّر الحفظ'); }
+}
+
+async function delStudent(id) {
+  if(!confirm('حذف هذا الطالب نهائياً؟')) return;
+  try {
+    setSyncStatus('loading','جاري الحذف...');
+    await sbDelete('students',`?id=eq.${id}`);
+    students=students.filter(s=>s.id!==id);
+    Object.keys(att).filter(k=>k.startsWith(id+'_')).forEach(k=>delete att[k]);
+    delete schedule['student_'+id];
+    setSyncStatus('ok','متزامن ✓');
+    renderStudents(); showToast('تم الحذف');
+  } catch(e){ setSyncStatus('err','خطأ في الحذف'); }
+}
+
+// ============================================================
+// REPORTS
+// ============================================================
+function renderReports() {
+  updSelects();
+  const cls=document.getElementById('rpt-cls').value, dates=getDates(), f=students.filter(s=>!cls||s.cls===cls);
+  let tp=0,ta=0,b75=0;
+  f.forEach(s=>{dates.forEach(d=>{const st=getSt(s.id,d);if(st==='present')tp++;else if(st==='absent')ta++;});const r=getRate(s.id);if(r!==null&&r<75)b75++;});
+  const tot=tp+ta;
+  document.getElementById('rpt-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">أيام مسجّلة</div><div class="stat-val">${dates.length}</div></div>
+    <div class="stat"><div class="stat-label">معدل الحضور</div><div class="stat-val green">${tot?Math.round(tp/tot*100)+'%':'—'}</div></div>
+    <div class="stat"><div class="stat-label">أقل من 75%</div><div class="stat-val red">${b75}</div></div>
+    <div class="stat"><div class="stat-label">عدد الطلاب</div><div class="stat-val">${f.length}</div></div>`;
+  const sorted=[...f].sort((a,b)=>(getRate(a.id)??101)-(getRate(b.id)??101));
+  document.getElementById('reports-table').innerHTML=sorted.length
+    ? sorted.map(s=>{
+        let p=0,ab=0; dates.forEach(d=>{const st=getSt(s.id,d);if(st==='present')p++;else if(st==='absent')ab++;});
+        const r=p+ab?Math.round(p/(p+ab)*100):null;
+        const c=r===null?'':r>=75?'color:var(--green)':'color:var(--red)';
+        const bc=r===null?'':r>=75?'var(--green)':'var(--red)';
+        return `<tr>
+          <td><strong>${s.name}</strong></td>
+          <td style="color:var(--text2);font-size:12px">${s.cls}</td>
+          <td style="color:var(--green);font-weight:600">${p}</td>
+          <td style="color:var(--red);font-weight:600">${ab}</td>
+          <td>${r!==null?`<span style="${c};font-weight:600">${r}%</span><div class="pbar"><div class="pfill" style="width:${r}%;background:${bc}"></div></div>`:'—'}</td></tr>`;
+      }).join('')
+    : `<tr><td colspan="5" class="empty">لا توجد بيانات</td></tr>`;
+}
+
+function exportCSV() {
+  const dates=getDates(), cls=document.getElementById('rpt-cls').value, f=students.filter(s=>!cls||s.cls===cls);
+  let csv='\uFEFF'+'الرقم,الاسم,المجموعة,'+dates.join(',')+',إجمالي حضور,إجمالي غياب,النسبة\n';
+  f.forEach(s=>{
+    let p=0,ab=0;
+    const days=dates.map(d=>{const st=getSt(s.id,d);if(st==='present')p++;else if(st==='absent')ab++;return st==='present'?'حاضر':st==='absent'?'غائب':'—';});
+    const r=p+ab?Math.round(p/(p+ab)*100):0;
+    csv+=`${s.sid||''},${s.name},${s.cls},${days.join(',')},${p},${ab},${r}%\n`;
+  });
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`حضور_بالقلم_${today()}.csv`;a.click();showToast('تم التصدير ✓');
+}
+
+
+
+// ============================================================
+// PAYMENTS
+// ============================================================
+let payments = [];
+
+async function loadPayments() {
+  try {
+    const rows = await sbGet('payments', '?order=accounting_month.desc,created_at.desc');
+    payments = rows || [];
+  } catch(e) { payments = []; }
+}
+
+// عند اختيار طالب: تعبئة المبالغ من رسومه الشهرية + الأشهر التالية
+function onPayStudentChange() {
+  const sid = parseInt(document.getElementById('pay-student').value);
+  const s = students.find(x=>x.id===sid);
+  if(!document.getElementById('pay-date').value) document.getElementById('pay-date').value = today();
+
+  if(s && s.monthly_fee && parseFloat(s.monthly_fee) > 0) {
+    const fee = parseFloat(s.monthly_fee).toFixed(3);
+    // عبّئ المبالغ إذا كانت فارغة
+    for(let i=1;i<=3;i++) {
+      if(!document.getElementById(`m${i}-amount`).value)
+        document.getElementById(`m${i}-amount`).value = fee;
+    }
+  }
+  // عبّئ الشهر الأول بالشهر الحالي إذا فارغ
+  if(!document.getElementById('m1-month').value) {
+    document.getElementById('m1-month').value = today().slice(0,7);
+    onMonthChange(1);
+  }
+  calcTotal();
+}
+
+// عند تغيير شهر: اقترح الشهر التالي تلقائياً
+function onMonthChange(n) {
+  const val = document.getElementById(`m${n}-month`).value;
+  if(!val) return;
+  const [y,m] = val.split('-').map(Number);
+  // الشهر التالي
+  if(n < 3) {
+    const nextMonth = m === 12 ? `${y+1}-01` : `${y}-${String(m+1).padStart(2,'0')}`;
+    if(!document.getElementById(`m${n+1}-month`).value)
+      document.getElementById(`m${n+1}-month`).value = nextMonth;
+  }
+  calcTotal();
+}
+
+function calcTotal() {
+  let total = 0, parts = [];
+  for(let i=1;i<=3;i++) {
+    const a = parseFloat(document.getElementById(`m${i}-amount`).value)||0;
+    const m = document.getElementById(`m${i}-month`).value;
+    if(a && m) { total += a; parts.push(`${m.split('-').reverse().join('/')}: ${a.toFixed(3)}`); }
+  }
+  const prev = document.getElementById('pay-preview');
+  prev.textContent = parts.length ? `الإجمالي: ${total.toFixed(3)} د.ب   |   ${parts.join(' — ')}` : '';
+}
+
+async function addPayment() {
+  const sid    = parseInt(document.getElementById('pay-student').value);
+  const method = document.getElementById('pay-method').value;
+  const payDate= document.getElementById('pay-date').value;
+  const note   = document.getElementById('pay-note').value.trim()||null;
+  if(!sid)   { showToast('اختر الطالب'); return; }
+  if(!payDate){ showToast('أدخل تاريخ الدفع'); return; }
+
+  const entries = [];
+  for(let i=1;i<=3;i++) {
+    const amount  = parseFloat(document.getElementById(`m${i}-amount`).value)||0;
+    const month   = document.getElementById(`m${i}-month`).value;
+    const partial = document.getElementById(`m${i}-partial`).value === 'true';
+    if(amount && month) {
+      // تحقق: لا يوجد دفعة مسبقة لنفس الطالب ونفس الشهر
+      const existing = payments.find(p=>p.student_id===sid && p.accounting_month && p.accounting_month.slice(0,7)===month);
+      if(existing) { showToast(`يوجد دفعة مسبقة لشهر ${month} — عدّل الدفعة الموجودة`); return; }
+      entries.push({ student_id:sid, accounting_month:month+'-01', amount, payment_date:payDate, method, is_partial:partial, note });
+    }
+  }
+  if(!entries.length){ showToast('أدخل بيانات شهر واحد على الأقل'); return; }
+
+  try {
+    setSyncStatus('loading','جاري الحفظ...');
+    const res = await fetch(`${SB_URL}/rest/v1/payments`, {
+      method:'POST', headers:{...HEADERS,'Prefer':'return=representation'},
+      body:JSON.stringify(entries)
+    });
+    const saved = await res.json();
+    if(!Array.isArray(saved)) throw new Error(JSON.stringify(saved));
+    saved.forEach(p=>payments.unshift(p));
+
+    setSyncStatus('ok','متزامن ✓');
+    // Clear form
+    for(let i=1;i<=3;i++) {
+      document.getElementById(`m${i}-month`).value='';
+      document.getElementById(`m${i}-amount`).value='';
+      document.getElementById(`m${i}-partial`).value='false';
+    }
+    document.getElementById('pay-preview').textContent='';
+    document.getElementById('pay-note').value='';
+    renderPayments();
+    showToast(`تم تسجيل ${entries.length} دفعة ✓`);
+  } catch(e){ setSyncStatus('err','خطأ'); showToast('تعذّر الحفظ'); console.error(e); }
+}
+
+async function deletePayment(id) {
+  if(!confirm('حذف هذه الدفعة؟')) return;
+  try {
+    setSyncStatus('loading','جاري الحذف...');
+    await sbDelete('payments', `?id=eq.${id}`);
+    payments = payments.filter(p=>p.id!==id);
+    setSyncStatus('ok','متزامن ✓');
+    renderPayments();
+    showToast('تم الحذف');
+  } catch(e){ setSyncStatus('err','خطأ'); }
+}
+
+// ============================================================
+// EDIT PAYMENT
+// ============================================================
+function openEditPay(id) {
+  const p = payments.find(x=>x.id===id);
+  if(!p) return;
+  const s = students.find(x=>x.id===p.student_id);
+  document.getElementById('edit-pay-title').textContent = `تعديل دفعة — ${s?s.name:''}`;
+  document.getElementById('edit-pay-id').value     = id;
+  document.getElementById('edit-pay-month').value  = (p.accounting_month||'').slice(0,7);
+  document.getElementById('edit-pay-amount').value = parseFloat(p.amount).toFixed(3);
+  document.getElementById('edit-pay-method').value = p.method||'cash';
+  document.getElementById('edit-pay-date').value   = p.payment_date||'';
+  document.getElementById('edit-pay-partial').value= p.is_partial?'true':'false';
+  document.getElementById('edit-pay-note').value   = p.note||'';
+  document.getElementById('edit-pay-modal').classList.remove('hidden');
+}
+function closeEditPay() { document.getElementById('edit-pay-modal').classList.add('hidden'); }
+
+async function saveEditPay() {
+  const id      = parseInt(document.getElementById('edit-pay-id').value);
+  const month   = document.getElementById('edit-pay-month').value;
+  const amount  = parseFloat(document.getElementById('edit-pay-amount').value)||0;
+  const method  = document.getElementById('edit-pay-method').value;
+  const payment_date = document.getElementById('edit-pay-date').value;
+  const is_partial   = document.getElementById('edit-pay-partial').value==='true';
+  const note    = document.getElementById('edit-pay-note').value.trim()||null;
+  if(!amount||!payment_date||!month){ showToast('أدخل جميع الحقول'); return; }
+  try {
+    setSyncStatus('loading','جاري الحفظ...');
+    await fetch(`${SB_URL}/rest/v1/payments?id=eq.${id}`, {
+      method:'PATCH', headers:{...HEADERS,'Prefer':'return=minimal'},
+      body:JSON.stringify({accounting_month:month+'-01', amount, method, payment_date, is_partial, note})
+    });
+    const p=payments.find(x=>x.id===id);
+    if(p){ p.accounting_month=month+'-01'; p.amount=amount; p.method=method; p.payment_date=payment_date; p.is_partial=is_partial; p.note=note; }
+    setSyncStatus('ok','متزامن ✓');
+    closeEditPay(); renderPayments();
+    showToast('تم التعديل ✓');
+  } catch(e){ setSyncStatus('err','خطأ'); showToast('تعذّر الحفظ'); }
+}
+
+// ============================================================
+// STATS + RENDER
+// ============================================================
+function getMonthlyStatus(s, monthStr) {
+  // هل دفع الطالب لهذا الشهر؟
+  const p = payments.find(x=>x.student_id===s.id && (x.accounting_month||'').slice(0,7)===monthStr);
+  if(!p) return {status:'unpaid', pay:null};
+  if(p.is_partial) return {status:'partial', pay:p};
+  return {status:'paid', pay:p};
+}
+
+function renderPayStats(filterMonth) {
+  const todayD = new Date(); todayD.setHours(0,0,0,0);
+  const fm = filterMonth || today().slice(0,7);
+  
+  // المطلوب = كل طالب عنده رسوم شهرية × الشهر الحالي ضمن فترة اشتراكه
+  let totalExpected=0, totalPaid=0, totalPartial=0;
+  let paidCount=0, partialCount=0, unpaidCount=0;
+
+  students.forEach(s=>{
+    const fee = parseFloat(s.monthly_fee)||0;
+    if(!fee) return;
+    // تحقق أن الطالب كان مشتركاً في هذا الشهر
+    const fmDate = new Date(fm+'-01');
+    const fmEnd  = new Date(fmDate.getFullYear(), fmDate.getMonth()+1, 0);
+    if(s.start_date && new Date(s.start_date) > fmEnd) return;
+    if(s.end_date   && new Date(s.end_date)   < fmDate) return;
+
+    totalExpected += fee;
+    const {status, pay} = getMonthlyStatus(s, fm);
+    if(status==='paid')    { totalPaid += parseFloat(pay.amount); paidCount++; }
+    else if(status==='partial'){ totalPaid += parseFloat(pay.amount); partialCount++; }
+    else unpaidCount++;
+  });
+  const remaining = Math.max(0, totalExpected - totalPaid);
+  const cash     = payments.filter(p=>(p.accounting_month||'').slice(0,7)===fm&&p.method==='cash').reduce((s,p)=>s+parseFloat(p.amount||0),0);
+  const transfer = payments.filter(p=>(p.accounting_month||'').slice(0,7)===fm&&p.method==='transfer').reduce((s,p)=>s+parseFloat(p.amount||0),0);
+
+  document.getElementById('pay-stats').innerHTML=`
+    <div class="stat"><div class="stat-label">المطلوب (${fm.split('-').reverse().join('/')})</div><div class="stat-val blue">${totalExpected.toFixed(3)}<span style="font-size:12px"> د.ب</span></div></div>
+    <div class="stat"><div class="stat-label">المدفوع</div><div class="stat-val green">${totalPaid.toFixed(3)}<span style="font-size:12px"> د.ب</span></div></div>
+    <div class="stat"><div class="stat-label">المتبقي</div><div class="stat-val red">${remaining.toFixed(3)}<span style="font-size:12px"> د.ب</span></div></div>
+    <div class="stat"><div class="stat-label">كاش</div><div class="stat-val">${cash.toFixed(3)}<span style="font-size:12px"> د.ب</span></div></div>
+    <div class="stat"><div class="stat-label">تحويل</div><div class="stat-val">${transfer.toFixed(3)}<span style="font-size:12px"> د.ب</span></div></div>
+    <div class="stat"><div class="stat-label">🟢 مدفوع</div><div class="stat-val green">${paidCount}</div></div>
+    <div class="stat"><div class="stat-label">🟡 جزئي</div><div class="stat-val" style="color:var(--amber)">${partialCount}</div></div>
+    <div class="stat"><div class="stat-label">🔴 لم يدفع</div><div class="stat-val red">${unpaidCount}</div></div>`;
+}
+
+function renderPayments() {
+  // تحديث dropdowns
+  const cls=getClasses();
+  const el=document.getElementById('pay-filter-cls');
+  if(el){const c=el.value;el.innerHTML='<option value="">كل المجموعات</option>'+cls.map(x=>`<option value="${x}"${x===c?' selected':''}>${x}</option>`).join('');}
+  const psel=document.getElementById('pay-student');
+  const cur=psel.value;
+  psel.innerHTML='<option value="">اختر طالب...</option>'+students.map(s=>`<option value="${s.id}"${s.id==cur?' selected':''}>${s.name} — ${s.cls}</option>`).join('');
+
+  const filterCls    = document.getElementById('pay-filter-cls').value;
+  const filterStatus = document.getElementById('pay-filter-status').value;
+  const filterMonth  = document.getElementById('pay-filter-month').value;
+  const search       = document.getElementById('pay-search').value.trim();
+  const fm = filterMonth || today().slice(0,7);
+
+  renderPayStats(fm);
+
+  // بناء الصفوف: كل الطلاب + حالة دفعهم للشهر المحدد
+  let rows = students.map(s=>{
+    const {status, pay} = getMonthlyStatus(s, fm);
+    return {s, status, pay};
+  }).filter(({s, status})=>{
+    if(filterCls   && s.cls!==filterCls) return false;
+    if(search && !s.name.includes(search)&&!s.cls.includes(search)) return false;
+    if(filterStatus && status!==filterStatus) return false;
+    return true;
+  });
+
+  // ترتيب: غير مدفوع → جزئي → مدفوع
+  const order={unpaid:0,partial:1,paid:2};
+  rows.sort((a,b)=>order[a.status]-order[b.status]||a.s.name.localeCompare(b.s.name,'ar'));
+
+  const monthLabel = fm.split('-').reverse().join('/');
+  document.getElementById('pay-table-title').textContent = `كشف ${monthLabel} — ${rows.length} طالب`;
+
+  document.getElementById('payments-table').innerHTML = rows.length
+    ? rows.map(({s,status,pay})=>{
+        const fee = s.monthly_fee ? parseFloat(s.monthly_fee).toFixed(3) : '—';
+        const paidAmt = pay ? parseFloat(pay.amount).toFixed(3) : '0.000';
+        const remaining = s.monthly_fee && pay
+          ? Math.max(0, parseFloat(s.monthly_fee)-parseFloat(pay.amount)).toFixed(3)
+          : (s.monthly_fee ? parseFloat(s.monthly_fee).toFixed(3) : '—');
+
+        let statusBadge, rowBg='';
+        if(status==='paid'){
+          statusBadge=`<span class="badge bp">مدفوع 🟢</span>`;
+        } else if(status==='partial'){
+          statusBadge=`<span style="font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;background:var(--amber-bg);border:1px solid var(--amber-border);color:var(--amber)">جزئي 🟡</span>`;
+          rowBg='background:var(--amber-bg)';
+        } else {
+          statusBadge=`<span class="badge ba">لم يدفع 🔴</span>`;
+          rowBg='background:var(--red-bg)';
+        }
+        const methodBadge = pay?(pay.method==='cash'?`<span class="method-cash">كاش 💵</span>`:pay.method==='transfer'?`<span class="method-transfer">تحويل 🏦</span>`:`<span style="font-size:11px;padding:2px 8px;border-radius:99px;background:var(--surface2);color:var(--text2);border:1px solid var(--border)">أخرى</span>`):'—';
+        const payDateStr  = pay ? pay.payment_date.replaceAll('-','/') : '—';
+        const acctMonth   = pay ? (pay.accounting_month||'').slice(0,7).split('-').reverse().join('/') : monthLabel;
+        const editBtn     = pay ? `<button class="btn" style="padding:3px 7px;font-size:11px" onclick="openEditPay(${pay.id})">✏️</button>` : '';
+        return `<tr style="${rowBg}">
+          <td><strong>${s.name}</strong>${s.cls==='خصوصي'?` <span class="tag-pvt">خصوصي</span>`:''}</td>
+          <td style="font-size:12px;color:var(--text2)">${s.cls}</td>
+          <td style="font-weight:600;color:var(--blue)">${fee}</td>
+          <td style="font-weight:600;color:var(--green)">${paidAmt}</td>
+          <td style="font-weight:600;color:${parseFloat(remaining)>0?'var(--red)':'var(--green)'}">${remaining}</td>
+          <td>${statusBadge}</td>
+          <td>${methodBadge}</td>
+          <td style="font-size:12px">${payDateStr}</td>
+          <td style="font-size:12px;color:var(--blue);font-weight:500">${acctMonth}</td>
+          <td>${editBtn}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="10" class="empty">لا يوجد نتائج</td></tr>`;
+}
+
+// ============================================================
+// SUBSCRIPTION MODAL
+// ============================================================
+function openSubModal(id) {
+  const s = students.find(x=>x.id===id);
+  document.getElementById('modal-student-id').value = id;
+  document.getElementById('modal-start').value = s.start_date||'';
+  document.getElementById('modal-end').value = s.end_date||'';
+  document.getElementById('modal-sessions').value = s.total_sessions||'';
+  document.getElementById('modal-fee').value = s.monthly_fee?parseFloat(s.monthly_fee).toFixed(3):'';
+  document.getElementById('sub-modal-overlay').classList.remove('hidden');
+}
+
+function closeSubModal() {
+  document.getElementById('sub-modal-overlay').classList.add('hidden');
+}
+
+async function saveSubModal() {
+  const id = parseInt(document.getElementById('modal-student-id').value);
+  const start = document.getElementById('modal-start').value||null;
+  const end = document.getElementById('modal-end').value||null;
+  const sessions = parseInt(document.getElementById('modal-sessions').value)||0;
+  const fee = parseFloat(document.getElementById('modal-fee').value)||0;
+  const s = students.find(x=>x.id===id);
+  s.start_date=start; s.end_date=end; s.total_sessions=sessions; s.monthly_fee=fee;
+  try {
+    setSyncStatus('loading','جاري الحفظ...');
+    await fetch(`${SB_URL}/rest/v1/students?id=eq.${id}`, {
+      method:'PATCH',
+      headers:{...HEADERS,'Prefer':'return=minimal'},
+      body:JSON.stringify({start_date:start,end_date:end,total_sessions:sessions,monthly_fee:fee})
+    });
+    setSyncStatus('ok','متزامن ✓');
+    closeSubModal();
+    renderStudents();
+    showToast('تم الحفظ ✓');
+  } catch(e){ setSyncStatus('err','خطأ في الحفظ'); showToast('تعذّر الحفظ'); }
+}
+
+function renderExpiryBanner() {
+  const today=new Date(); today.setHours(0,0,0,0);
+  const expiring=[], expired=[];
+  students.forEach(s=>{
+    if(!s.end_date) return;
+    const end=new Date(s.end_date);
+    const diff=Math.round((end-today)/(1000*60*60*24));
+    if(diff<0) expired.push(s.name);
+    else if(diff<=7) expiring.push({name:s.name,days:diff});
+  });
+  let html='';
+  if(expired.length) html+=`<div class="expiry-banner">🚨 <strong>اشتراك منتهي:</strong> ${expired.join('، ')}</div>`;
+  if(expiring.length) html+=`<div class="expiry-banner warn">⚠️ <strong>ينتهي قريباً:</strong> ${expiring.map(x=>x.days===0?`${x.name} (اليوم!)`:x.days===1?`${x.name} (غداً)`:x.name+' ('+x.days+' أيام)').join('، ')}</div>`;
+  const container=document.getElementById('att-stats');
+  const existing=document.getElementById('expiry-banners');
+  if(existing) existing.remove();
+  if(html){
+    const div=document.createElement('div');
+    div.id='expiry-banners'; div.innerHTML=html;
+    container.parentNode.insertBefore(div,container);
+  }
+}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('att-date').value=today();
+document.getElementById('pay-date').value=today();
+document.getElementById('pay-filter-month').value=today().slice(0,7);
+loadAll();
+</script>
+</body>
+</html>
